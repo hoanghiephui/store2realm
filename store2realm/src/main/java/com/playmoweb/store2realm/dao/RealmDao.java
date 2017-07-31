@@ -2,6 +2,7 @@ package com.playmoweb.store2realm.dao;
 
 import com.playmoweb.store2store.dao.IStoreDao;
 import com.playmoweb.store2store.utils.Filter;
+import com.playmoweb.store2store.utils.NullObject;
 import com.playmoweb.store2store.utils.SortType;
 import com.playmoweb.store2store.utils.SortingMode;
 
@@ -9,66 +10,27 @@ import java.util.Date;
 import java.util.List;
 import java.util.UnknownFormatFlagsException;
 
+import io.reactivex.Observable;
 import io.realm.Realm;
 import io.realm.RealmObject;
 import io.realm.RealmQuery;
 import io.realm.RealmResults;
 import io.realm.Sort;
-import rx.Observable;
 
 /**
  * Realm store implementation
  * @author  Thibaud Giovannetti
  * @by      Playmoweb
- * @date    08/02/2017.
+ * @date    08/02/2017
+ *
+ * @update  hoanghiep
+ * @date    28/07/2017
  */
 public class RealmDao<T extends RealmObject> implements IStoreDao<T> {
-    protected Class<T> clazz;
+    protected  Class<T> clazz;
 
     public RealmDao(Class<T> clazz) {
         this.clazz = clazz;
-    }
-
-    /**
-     * Get one with a specific filter object
-     * @param filter
-     * @return
-     */
-    @Override
-    public final Observable<T> getOne(Filter filter, SortingMode sortingMode) {
-        Realm realm = Realm.getDefaultInstance();
-
-        RealmQuery<T> query = realm.where(clazz);
-        query = filterToQuery(filter, query);
-
-        T item = null;
-
-        if(sortingMode != null) {
-            RealmResults<T> items = query.findAllSorted(sortingMode.key, convertToSort(sortingMode.sort));
-            if(!items.isEmpty()){
-                item = items.first();
-            }
-        } else {
-            item = query.findFirst();
-        }
-
-        T copy = null;
-        if(item != null) {
-            copy = realm.copyFromRealm(item);
-        }
-        realm.close();
-
-        return Observable.just(copy);
-    }
-
-    /**
-     * Get one by id
-     * @param id
-     * @return
-     */
-    @Override
-    public Observable<T> getById(int id) {
-        return getOne(new Filter("id", id), null);
     }
 
     /**
@@ -76,7 +38,7 @@ public class RealmDao<T extends RealmObject> implements IStoreDao<T> {
      * @return
      */
     @Override
-    public final Observable<List<T>> getAll(Filter filter, SortingMode sortingMode) {
+    public Observable<List<T>> getAll(Filter filter, SortingMode sortingMode) {
         Realm realm = Realm.getDefaultInstance();
         RealmQuery<T> query = realm.where(clazz);
         query = filterToQuery(filter, query);
@@ -94,11 +56,48 @@ public class RealmDao<T extends RealmObject> implements IStoreDao<T> {
     }
 
     /**
+     * Get one with a specific filter object
+     * @param filter
+     * @return
+     */
+    @Override
+    public Observable<T> getOne(Filter filter, SortingMode sortingMode) {
+        Realm realm = Realm.getDefaultInstance();
+        RealmQuery<T> query = realm.where(clazz);
+        query = filterToQuery(filter, query);
+        T item = null;
+        if (sortingMode != null) {
+            RealmResults<T> items = query.findAllSorted(sortingMode.key, convertToSort(sortingMode.sort));
+            if (!items.isEmpty()) {
+                item = items.first();
+            }
+        } else {
+            item = query.findFirst();
+        }
+        T copy = null;
+        if (item != null) {
+            copy = realm.copyFromRealm(item);
+        }
+        realm.close();
+        return Observable.just(copy);
+    }
+
+    /**
+     * Get one by id
+     * @param id
+     * @return
+     */
+    @Override
+    public Observable<T> getById(int id) {
+        return getOne(new Filter("id", id), null);
+    }
+
+    /**
      * Insert one object
      * @return object inserted
      */
     @Override
-    public final Observable<T> insertOrUpdate(T object) {
+    public Observable<T> insertOrUpdate(T object) {
         Realm realm = Realm.getDefaultInstance();
         realm.beginTransaction();
         T inserted = realm.copyToRealmOrUpdate(object);
@@ -111,16 +110,16 @@ public class RealmDao<T extends RealmObject> implements IStoreDao<T> {
 
     /**
      * Insert or update all
-     * @param objects
+     * @param items
      * @return List of item copied from realm
      */
     @Override
-    public final Observable<List<T>> insertOrUpdate(List<T> objects) {
+    public Observable<List<T>> insertOrUpdate(List<T> items) {
         final Realm realm = Realm.getDefaultInstance();
         realm.beginTransaction();
-        objects = realm.copyToRealmOrUpdate(objects);
+        items = realm.copyToRealmOrUpdate(items);
         realm.commitTransaction();
-        List<T> copies = realm.copyFromRealm(objects);
+        List<T> copies = realm.copyFromRealm(items);
         realm.close();
 
         return Observable.just(copies);
@@ -128,15 +127,15 @@ public class RealmDao<T extends RealmObject> implements IStoreDao<T> {
 
     /**
      * Remove only these items
-     * @param objects
+     * @param items
      * @return List of item copied from realm
      */
     @Override
-    public final Observable<Void> delete(List<T> objects) {
+    public Observable<NullObject> delete(List<T> items) {
         Realm realm = Realm.getDefaultInstance();
         realm.beginTransaction();
 
-        for(T obj : objects) {
+        for(T obj : items) {
             if(obj.isManaged()) {
                 obj.deleteFromRealm(); // potentially slow
             } else {
@@ -148,11 +147,11 @@ public class RealmDao<T extends RealmObject> implements IStoreDao<T> {
         realm.commitTransaction();
         realm.close();
 
-        return Observable.just(null);
+        return Observable.just(new NullObject());
     }
 
     @Override
-    public final Observable<Void> delete(T object) {
+    public Observable<NullObject> delete(T object) {
         if(object.isManaged()) {
             object.deleteFromRealm();
         } else {
@@ -163,18 +162,18 @@ public class RealmDao<T extends RealmObject> implements IStoreDao<T> {
             realm.commitTransaction();
             realm.close();
         }
-        return Observable.just(null);
+        return Observable.just(new NullObject());
     }
 
     @Override
-    public Observable<Void> deleteAll() {
+    public Observable<NullObject> deleteAll() {
         final Realm realm = Realm.getDefaultInstance();
         realm.beginTransaction();
         realm.delete(clazz);
         realm.commitTransaction();
         realm.close();
 
-        return Observable.just(null);
+        return Observable.just(new NullObject());
     }
 
     /**************************************************************************

@@ -1,3 +1,5 @@
+* If you are looking for a version with rxjava 1.x, please use the master branch for now *
+
 ## About
 
 Store2Realm simplify the synchronization between a store (eg: a distant API) with a local Realm datastore on android.
@@ -69,12 +71,10 @@ private final MyObjectModelService myObjectService; // injected by dagger in the
 
 public void loadAllMyObjects() {
     // no filter and no sortingMode
-    final Subscription s = myObjectService.getAll(null, null, getAllMyObjectObserver)
+    disposables.add(myObjectService.getAll(null, null, getAllMyObjectObserver)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
-            .subscribe(getAllMyObjectObserver);
-
-    subscriptions.add(s);
+            .subscribe(getAllMyObjectObserver));
 }
 
 /**
@@ -95,4 +95,11 @@ private final CustomObserver<List<MyObjectModel>> getAllMyObjectObserver = new C
     }
 };
 ````
-#See more: https://blog.playmoweb.com/caching-and-synchronization-with-realm-retrofit2-and-rxjava-on-android-aba8e43e66c4
+
+
+## See more 
+https://blog.playmoweb.com/caching-and-synchronization-with-realm-retrofit2-and-rxjava-on-android-aba8e43e66c4
+
+
+## Contributors
+Please see [CONTRIBUTORS.md](https://github.com/playmoweb/store2realm/blob/master/CONTRIBUTORS.md)
