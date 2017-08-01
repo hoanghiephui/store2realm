@@ -1,1 +1,3 @@
-include ':store2realm', ':example'
+include ':store2realm', ':example', 'store2store'
+project(':store2store').projectDir = new File('submodule/store2store')
+

@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import com.playmoweb.store2realm.example.ExampleApplication;
 import com.playmoweb.store2realm.example.R;
+import com.playmoweb.store2realm.example.ViewUtils;
 import com.playmoweb.store2realm.example.data.models.Post;
 import com.playmoweb.store2realm.example.injection.component.ActivityComponent;
 import com.playmoweb.store2realm.example.injection.component.DaggerActivityComponent;
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements MainView {
         listOfPosts.setAdapter(adapter);
 
         mainPresenter.loadPosts(); // load posts
+        ViewUtils.imageDownload(this, "", "hiep");
     }
 
     @Override

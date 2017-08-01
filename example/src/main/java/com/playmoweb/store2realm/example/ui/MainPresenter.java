@@ -1,5 +1,6 @@
 package com.playmoweb.store2realm.example.ui;
 
+import com.playmoweb.store2realm.example.ViewUtils;
 import com.playmoweb.store2realm.example.data.models.Post;
 import com.playmoweb.store2realm.example.data.services.PostService;
 import com.playmoweb.store2store.utils.CustomObserver;
